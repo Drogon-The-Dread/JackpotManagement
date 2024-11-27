@@ -62,9 +62,34 @@ namespace JackpotManagement.Services
         }
 
 
-        //public async Task<bool> ClaimJackpotAsync(string playerId)
-        //{
-        //    //Write the code here.
-        //}
+        public async Task<bool> ClaimJackpotAsync(string playerId)
+        {
+            if (string.IsNullOrEmpty(playerId))
+            {
+                throw new ArgumentException("Player ID cannot be null or empty.", nameof(playerId));
+            }
+
+            try
+            {
+                var currentJackpot = await _jackpotRepository.GetJackpotBalanceAsync();
+
+                if (currentJackpot == null || currentJackpot.Amount <= 0)
+                {
+                    return false; // No jackpot to claim
+                }
+
+                var updateSuccess = await _jackpotRepository.UpdateJackpotBalanceAsync(0);
+
+                // Step 4: Log the claim (optional)
+                // Log the playerId and jackpot claim. This can be implemented if needed for auditing or records.
+
+                return updateSuccess;
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Error claiming jackpot", ex);
+            }
+        }
+
     }
 }

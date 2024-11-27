@@ -20,52 +20,57 @@ namespace JackpotManagement.Tests
         }
 
         [Fact]
-        public async Task ContributeToJackpotBalanceAsync_AddsContribution_WhenAmountIsValid()
+        public async Task ClaimJackpotAsync_SuccessfullyClaimsJackpot_WhenBalanceIsGreaterThanZero()
         {
-            decimal contribution = 500;
+            // Arrange
             var currentJackpotBalance = new JackpotDto { Amount = 1000 };
             _mockJackpotRepository.Setup(repo => repo.GetJackpotBalanceAsync()).ReturnsAsync(currentJackpotBalance);
-            _mockJackpotRepository.Setup(repo => repo.UpdateJackpotBalanceAsync(It.IsAny<decimal>())).ReturnsAsync(true);
+            _mockJackpotRepository.Setup(repo => repo.UpdateJackpotBalanceAsync(0)).ReturnsAsync(true);
 
-            var result = await _jackpotService.ContributeToJackpotBalanceAsync(contribution, "player123");
+            // Act
+            var result = await _jackpotService.ClaimJackpotAsync("player123");
 
+            // Assert
             Assert.True(result);
             _mockJackpotRepository.Verify(repo => repo.GetJackpotBalanceAsync(), Times.Once);
-            _mockJackpotRepository.Verify(repo => repo.UpdateJackpotBalanceAsync(1500), Times.Once); // 1000 + 500 = 1500
+            _mockJackpotRepository.Verify(repo => repo.UpdateJackpotBalanceAsync(0), Times.Once);
         }
 
         [Fact]
-        public async Task ContributeToJackpotBalanceAsync_ThrowsArgumentException_WhenAmountIsZeroOrNegative()
+        public async Task ClaimJackpotAsync_ReturnsFalse_WhenJackpotBalanceIsZeroOrNull()
         {
-            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _jackpotService.ContributeToJackpotBalanceAsync(0, "player123"));
-            Assert.Equal("Contribution amount must be greater than zero. (Parameter 'amount')", exception.Message);
+            // Arrange
+            _mockJackpotRepository.Setup(repo => repo.GetJackpotBalanceAsync()).ReturnsAsync((JackpotDto)null);
 
-            exception = await Assert.ThrowsAsync<ArgumentException>(() => _jackpotService.ContributeToJackpotBalanceAsync(-100, "player123"));
-            Assert.Equal("Contribution amount must be greater than zero. (Parameter 'amount')", exception.Message);
-        }
+            // Act
+            var result = await _jackpotService.ClaimJackpotAsync("player123");
 
-        [Fact]
-        public async Task ContributeToJackpotBalanceAsync_ReturnsFalse_WhenUpdateFails()
-        {
-            decimal contribution = 500;
-            var currentJackpotBalance = new JackpotDto { Amount = 1000 };
-            _mockJackpotRepository.Setup(repo => repo.GetJackpotBalanceAsync()).ReturnsAsync(currentJackpotBalance);
-            _mockJackpotRepository.Setup(repo => repo.UpdateJackpotBalanceAsync(It.IsAny<decimal>())).ReturnsAsync(false);
-
-            var result = await _jackpotService.ContributeToJackpotBalanceAsync(contribution, "player123");
-
+            // Assert
             Assert.False(result);
-            _mockJackpotRepository.Verify(repo => repo.UpdateJackpotBalanceAsync(1500), Times.Once); // 1000 + 500 = 1500
+            _mockJackpotRepository.Verify(repo => repo.GetJackpotBalanceAsync(), Times.Once);
+            _mockJackpotRepository.Verify(repo => repo.UpdateJackpotBalanceAsync(It.IsAny<decimal>()), Times.Never);
         }
 
         [Fact]
-        public async Task ContributeToJackpotBalanceAsync_ThrowsApplicationException_WhenExceptionOccurs()
+        public async Task ClaimJackpotAsync_ThrowsArgumentException_WhenPlayerIdIsNullOrEmpty()
         {
-            decimal contribution = 500;
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() => _jackpotService.ClaimJackpotAsync(null));
+            Assert.Equal("Player ID cannot be null or empty. (Parameter 'playerId')", exception.Message);
+
+            exception = await Assert.ThrowsAsync<ArgumentException>(() => _jackpotService.ClaimJackpotAsync(string.Empty));
+            Assert.Equal("Player ID cannot be null or empty. (Parameter 'playerId')", exception.Message);
+        }
+
+        [Fact]
+        public async Task ClaimJackpotAsync_ThrowsApplicationException_WhenExceptionOccurs()
+        {
+            // Arrange
             _mockJackpotRepository.Setup(repo => repo.GetJackpotBalanceAsync()).ThrowsAsync(new Exception("Database error"));
 
-            var exception = await Assert.ThrowsAsync<ApplicationException>(() => _jackpotService.ContributeToJackpotBalanceAsync(contribution, "player123"));
-            Assert.Equal("Error contributing to jackpot balance", exception.Message);
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ApplicationException>(() => _jackpotService.ClaimJackpotAsync("player123"));
+            Assert.Equal("Error claiming jackpot", exception.Message);
         }
     }
 }
