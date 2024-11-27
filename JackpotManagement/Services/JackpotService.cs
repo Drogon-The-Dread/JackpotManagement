@@ -42,18 +42,29 @@ namespace JackpotManagement.Services
 
             try
             {
-                var currentJackpot = await _jackpotRepository.GetJackpotBalanceAsync();
-
-                if (currentJackpot == null)
+                var player = await _playerRepository.GetPlayerBalanceAsync(playerId);
+                if (player == null)
                 {
-                    currentJackpot = new JackpotDto { Amount = 0 };
+                    throw new ArgumentException("Player not found.", nameof(playerId));
                 }
 
-                decimal newJackpotBalance = currentJackpot.Amount + amount;
+                if (player.Balance < amount)
+                {
+                    throw new ArgumentException("Insufficient funds to contribute to the jackpot.", nameof(amount));
+                }
 
-                var updateSuccess = await _jackpotRepository.UpdateJackpotBalanceAsync(newJackpotBalance);
+                decimal newPlayerBalance = player.Balance - amount;
+                var playerBalanceUpdated = await _playerRepository.UpdatePlayerBalanceAsync(playerId, newPlayerBalance);
+                if (!playerBalanceUpdated)
+                {
+                    throw new ApplicationException("Failed to update player balance.");
+                }
 
-                return updateSuccess;
+                var currentJackpot = await _jackpotRepository.GetJackpotBalanceAsync();
+                decimal newJackpotBalance = currentJackpot?.Amount + amount ?? amount;
+                var jackpotUpdated = await _jackpotRepository.UpdateJackpotBalanceAsync(newJackpotBalance);
+
+                return jackpotUpdated;
             }
             catch (Exception ex)
             {
@@ -72,18 +83,26 @@ namespace JackpotManagement.Services
             try
             {
                 var currentJackpot = await _jackpotRepository.GetJackpotBalanceAsync();
-
                 if (currentJackpot == null || currentJackpot.Amount <= 0)
                 {
                     return false; // No jackpot to claim
                 }
 
-                var updateSuccess = await _jackpotRepository.UpdateJackpotBalanceAsync(0);
+                var player = await _playerRepository.GetPlayerBalanceAsync(playerId);
+                if (player == null)
+                {
+                    throw new ArgumentException("Player not found.", nameof(playerId));
+                }
 
-                // Step 4: Log the claim (optional)
-                // Log the playerId and jackpot claim. This can be implemented if needed for auditing or records.
+                decimal newPlayerBalance = player.Balance + currentJackpot.Amount;
+                var playerBalanceUpdated = await _playerRepository.UpdatePlayerBalanceAsync(playerId, newPlayerBalance);
+                if (!playerBalanceUpdated)
+                {
+                    throw new ApplicationException("Failed to update player balance.");
+                }
 
-                return updateSuccess;
+                var jackpotUpdated = await _jackpotRepository.UpdateJackpotBalanceAsync(0);
+                return jackpotUpdated;
             }
             catch (Exception ex)
             {
