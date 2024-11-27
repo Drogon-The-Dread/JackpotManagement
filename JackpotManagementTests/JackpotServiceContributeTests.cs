@@ -20,20 +20,29 @@ namespace JackpotManagement.Tests
         }
 
         [Fact]
-        public async Task ClaimJackpotAsync_SuccessfullyClaimsJackpot_WhenBalanceIsGreaterThanZero()
+        public async Task ContributeToJackpotBalanceAsync_AddsContribution_WhenAmountIsValid()
         {
-            // Arrange
+            decimal contribution = 500;
             var currentJackpotBalance = new JackpotDto { Amount = 1000 };
+            var playerBalance = 1000m; // Player has enough balance to contribute
+
+            // Mock the repository methods
             _mockJackpotRepository.Setup(repo => repo.GetJackpotBalanceAsync()).ReturnsAsync(currentJackpotBalance);
-            _mockJackpotRepository.Setup(repo => repo.UpdateJackpotBalanceAsync(0)).ReturnsAsync(true);
+            _mockJackpotRepository.Setup(repo => repo.UpdateJackpotBalanceAsync(It.IsAny<decimal>())).ReturnsAsync(true);
+
+            // Mock player repository to return a player with sufficient balance
+            _mockPlayerRepository.Setup(repo => repo.GetPlayerBalanceAsync("player123")).ReturnsAsync(new PlayerDto { Balance = playerBalance });
+            _mockPlayerRepository.Setup(repo => repo.UpdatePlayerBalanceAsync("player123", It.IsAny<decimal>())).ReturnsAsync(true);
 
             // Act
-            var result = await _jackpotService.ClaimJackpotAsync("player123");
+            var result = await _jackpotService.ContributeToJackpotBalanceAsync(contribution, "player123");
 
             // Assert
-            Assert.True(result);
-            _mockJackpotRepository.Verify(repo => repo.GetJackpotBalanceAsync(), Times.Once);
-            _mockJackpotRepository.Verify(repo => repo.UpdateJackpotBalanceAsync(0), Times.Once);
+            Assert.True(result); // The contribution should be successful
+            _mockJackpotRepository.Verify(repo => repo.GetJackpotBalanceAsync(), Times.Once); // Verify that we retrieved the jackpot balance once
+            _mockJackpotRepository.Verify(repo => repo.UpdateJackpotBalanceAsync(1500), Times.Once); // 1000 + 500 = 1500
+            _mockPlayerRepository.Verify(repo => repo.GetPlayerBalanceAsync("player123"), Times.Once); // Ensure the player's balance was checked
+            _mockPlayerRepository.Verify(repo => repo.UpdatePlayerBalanceAsync("player123", 500), Times.Once); // Player's new balance should be 500
         }
 
         [Fact]
