@@ -14,19 +14,19 @@ namespace JackpotManagement.Services
             _playerRepository = playerRepository;
         }
 
-        public async Task<JackpotDto> GetJackpotBalanceAsync()
-        {
-            //Write the code here.
-        }
+        //public async Task<JackpotDto> GetJackpotBalanceAsync()
+        //{
+        //    //Write the code here.
+        //}
 
-        public async Task<bool> ContributeToJackpotBalanceAsync(decimal amount, string playerId)
-        {
-            // Write the code here. 
-        }
+        //public async Task<bool> ContributeToJackpotBalanceAsync(decimal amount, string playerId)
+        //{
+        //    // Write the code here. 
+        //}
 
-        public async Task<bool> ClaimJackpotAsync(string playerId)
-        {
-            //Write the code here.
-        }
+        //public async Task<bool> ClaimJackpotAsync(string playerId)
+        //{
+        //    //Write the code here.
+        //}
     }
 }
