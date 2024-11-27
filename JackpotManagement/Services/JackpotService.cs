@@ -33,10 +33,34 @@ namespace JackpotManagement.Services
             }
         }
 
-        //public async Task<bool> ContributeToJackpotBalanceAsync(decimal amount, string playerId)
-        //{
-        //    // Write the code here. 
-        //}
+        public async Task<bool> ContributeToJackpotBalanceAsync(decimal amount, string playerId)
+        {
+            if (amount <= 0)
+            {
+                throw new ArgumentException("Contribution amount must be greater than zero.", nameof(amount));
+            }
+
+            try
+            {
+                var currentJackpot = await _jackpotRepository.GetJackpotBalanceAsync();
+
+                if (currentJackpot == null)
+                {
+                    currentJackpot = new JackpotDto { Amount = 0 };
+                }
+
+                decimal newJackpotBalance = currentJackpot.Amount + amount;
+
+                var updateSuccess = await _jackpotRepository.UpdateJackpotBalanceAsync(newJackpotBalance);
+
+                return updateSuccess;
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Error contributing to jackpot balance", ex);
+            }
+        }
+
 
         //public async Task<bool> ClaimJackpotAsync(string playerId)
         //{

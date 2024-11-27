@@ -5,13 +5,13 @@ using Moq;
 
 namespace JackpotManagement.Tests
 {
-    public class JackpotServiceTests
+    public class JackpotServiceBalanceTests
     {
         private readonly Mock<IJackpotRepository> _mockJackpotRepository;
         private readonly Mock<IPlayerRepository> _mockPlayerRepository;
         private readonly JackpotService _jackpotService;
 
-        public JackpotServiceTests()
+        public JackpotServiceBalanceTests()
         {
             _mockJackpotRepository = new Mock<IJackpotRepository>();
             _mockPlayerRepository = new Mock<IPlayerRepository>();
