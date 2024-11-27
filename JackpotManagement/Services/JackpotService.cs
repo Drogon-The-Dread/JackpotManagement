@@ -14,10 +14,24 @@ namespace JackpotManagement.Services
             _playerRepository = playerRepository;
         }
 
-        //public async Task<JackpotDto> GetJackpotBalanceAsync()
-        //{
-        //    //Write the code here.
-        //}
+        public async Task<JackpotDto> GetJackpotBalanceAsync()
+        {
+            try
+            {
+                var jackpotBalance = await _jackpotRepository.GetJackpotBalanceAsync();
+
+                if (jackpotBalance == null)
+                {
+                    jackpotBalance = new JackpotDto { Amount = 0 };
+                }
+
+                return jackpotBalance;
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Error retrieving jackpot balance", ex);
+            }
+        }
 
         //public async Task<bool> ContributeToJackpotBalanceAsync(decimal amount, string playerId)
         //{
